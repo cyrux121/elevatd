@@ -4,19 +4,18 @@ import { clsx } from "@/lib/clsx";
 type Props = {
   src: string | null | undefined;
   alt: string;
-  label: string; // Shown when src is missing (e.g. SKU or product name).
+  label: string;
+  ledCount?: number;
   className?: string;
   priority?: boolean;
   sizes?: string;
 };
 
-// Renders a real image when src is present, otherwise a clean gray placeholder
-// with the label overlaid. Aspect ratio is locked to square via the wrapper, so
-// layout doesn't shift when real photos are uploaded.
 export function ProductImage({
   src,
   alt,
   label,
+  ledCount,
   className,
   priority,
   sizes = "(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw",
@@ -24,7 +23,8 @@ export function ProductImage({
   return (
     <div
       className={clsx(
-        "relative aspect-square w-full overflow-hidden rounded-xl bg-muted",
+        "relative aspect-[4/3] w-full overflow-hidden rounded-md",
+        "bg-[repeating-linear-gradient(45deg,#1a1c22_0_8px,#16181d_8px_16px)]",
         className
       )}
     >
@@ -38,18 +38,28 @@ export function ProductImage({
           className="object-cover"
         />
       ) : (
-        <Placeholder label={label} />
+        <Placeholder label={label} ledCount={ledCount} />
       )}
     </div>
   );
 }
 
-function Placeholder({ label }: { label: string }) {
+function Placeholder({ label, ledCount }: { label: string; ledCount?: number }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center">
-      <span className="px-4 text-center text-base font-semibold tracking-tight text-ink sm:text-lg">
-        {label}
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 p-4 text-center">
+      <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-fg-3">
+        PRODUCT PHOTO
       </span>
+      {ledCount && (
+        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-accent">
+          {ledCount}-LED POD · LIT
+        </span>
+      )}
+      {!ledCount && (
+        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-fg-3">
+          {label}
+        </span>
+      )}
     </div>
   );
 }

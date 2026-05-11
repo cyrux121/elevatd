@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 html, body {
-  background-color: #ffffff;
-  color: #000000;
+  background-color: #06070a;
+  color: #f6f7f9;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -17,7 +17,7 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Utility: subtle reveal-on-scroll. JS layers `.is-visible` when in view. */
+/* Reveal-on-scroll (JS adds .is-visible via Reveal component) */
 .reveal {
   opacity: 0;
   transform: translateY(12px);
@@ -27,4 +27,10 @@ html {
 .reveal.is-visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* Remove native select arrow so components can render their own chevron */
+select {
+  -webkit-appearance: none;
+  appearance: none;
 }
