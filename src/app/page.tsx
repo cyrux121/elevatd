@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getFeaturedProducts } from "@/lib/products";
 import { ProductCard } from "@/components/product-card";
 
+export const runtime = "edge";
+
 export default async function HomePage() {
   const featured = await getFeaturedProducts();
 

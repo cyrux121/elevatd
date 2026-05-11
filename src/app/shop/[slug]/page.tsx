@@ -5,6 +5,8 @@ import { ProductImage } from "@/components/product-image";
 import { formatPrice } from "@/lib/format";
 import { AddToCart } from "@/app/shop/[slug]/_add-to-cart";
 
+export const runtime = "edge";
+
 export async function generateStaticParams() {
   const products = await getAllProducts();
   return products.map((p) => ({ slug: p.slug }));

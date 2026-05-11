@@ -1,5 +1,7 @@
 import { CartView } from "@/app/cart/_cart-view";
 
+export const runtime = "edge";
+
 export const metadata = { title: "Cart" };
 
 export default function CartPage() {

@@ -1,3 +1,5 @@
+export const runtime = "edge";
+
 export const metadata = { title: "Contact & FAQ" };
 
 export default function ContactPage() {

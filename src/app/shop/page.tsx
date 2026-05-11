@@ -2,6 +2,8 @@ import { getAllProducts } from "@/lib/products";
 import { ProductCard } from "@/components/product-card";
 import { ShopFilter } from "@/app/shop/_filter";
 
+export const runtime = "edge";
+
 export const metadata = { title: "Shop" };
 
 export default async function ShopPage({

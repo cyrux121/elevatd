@@ -1,0 +1,8 @@
+# Cloudflare Pages config. The dashboard's build settings override most of this,
+# but keeping it in-repo lets us run `npm run preview` and `npm run deploy` locally
+# without re-typing flags.
+
+name = "elevated-customs"
+compatibility_date = "2024-11-12"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".vercel/output/static"
