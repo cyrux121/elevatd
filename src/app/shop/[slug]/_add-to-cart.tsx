@@ -2,146 +2,130 @@
 
 import { useState } from "react";
 import { useCart } from "@/lib/cart-store";
-import type { Product, Variant } from "@/lib/types";
-import { formatPrice } from "@/lib/format";
-import { clsx } from "@/lib/clsx";
+import type { Product } from "@/lib/types";
 
-export function AddToCart({
-  product,
-  disabled,
-}: {
-  product: Product;
-  disabled?: boolean;
-}) {
-  const [variant, setVariant] = useState<Variant>("single");
-  const [qty, setQty] = useState(1);
+const QTY_OPTIONS = [1, 4, 8, 12, 16, 20] as const;
+type Qty = (typeof QTY_OPTIONS)[number];
+
+function priceForQty(product: Product, qty: Qty): number {
+  const single = product.price_single_cents;
+  const kit = product.price_kit_cents;
+  if (qty === 1) return single;
+  if (qty === 12) return kit;
+  if (qty === 4) return Math.round(single * 4 * 0.93);
+  if (qty === 8) return Math.round(single * 8 * 0.88);
+  return Math.round((kit / 12) * qty);
+}
+
+function savingsPct(product: Product, qty: Qty): number {
+  const list = product.price_single_cents * qty;
+  const actual = priceForQty(product, qty);
+  const pct = Math.round(((list - actual) / list) * 100);
+  return pct >= 5 ? pct : 0;
+}
+
+function fmt(cents: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(cents / 100);
+}
+
+export function AddToCart({ product }: { product: Product }) {
+  const [qty, setQty] = useState<Qty>(12);
   const [added, setAdded] = useState(false);
   const addLine = useCart((s) => s.addLine);
 
-  const unitPriceCents =
-    variant === "single" ? product.price_single_cents : product.price_kit_cents;
+  const total = priceForQty(product, qty);
+  const unitCents = Math.round(total / qty);
+  const savings = savingsPct(product, qty);
 
   function handleAdd() {
-    if (disabled) return;
     addLine({
       productId: product.id,
       sku: product.sku,
       slug: product.slug,
       name: product.name,
-      variant,
-      unitPriceCents,
-      quantity: qty,
+      variant: qty === 12 ? "kit" : "single",
+      unitPriceCents: qty === 12 ? product.price_kit_cents : unitCents,
+      quantity: qty === 12 ? 1 : qty,
     });
     setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
+    setTimeout(() => setAdded(false), 1600);
   }
 
   return (
-    <div>
-      <fieldset>
-        <legend className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Option
-        </legend>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <VariantOption
-            label="Single light"
-            sub={formatPrice(product.price_single_cents)}
-            selected={variant === "single"}
-            onClick={() => setVariant("single")}
-          />
-          <VariantOption
-            label="12-pack kit"
-            sub={formatPrice(product.price_kit_cents)}
-            selected={variant === "kit"}
-            onClick={() => setVariant("kit")}
-            badge="Save $$$"
-          />
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 items-end gap-4">
+        <div>
+          <label className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.1em] text-fg-2">
+            Quantity
+          </label>
+          <div className="relative">
+            <select
+              value={qty}
+              onChange={(e) => setQty(Number(e.target.value) as Qty)}
+              className="h-[46px] w-full cursor-pointer rounded-sm border border-ink-4 bg-ink-3 pl-3 pr-9 font-mono text-[13px] text-fg-0 focus:border-accent focus:outline-none"
+            >
+              {QTY_OPTIONS.map((q) => (
+                <option key={q} value={q}>
+                  {q} {q === 1 ? "piece" : "pieces"}
+                  {q === 12 ? " — 12-pack kit" : ""}
+                </option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-3 top-1/2 h-2 w-2 -translate-y-[60%] rotate-45 border-b-[1.5px] border-r-[1.5px] border-fg-1" />
+          </div>
         </div>
-      </fieldset>
-
-      <div className="mt-6 flex items-center gap-4">
-        <div className="inline-flex items-center rounded-full border border-muted-border">
-          <button
-            type="button"
-            onClick={() => setQty((q) => Math.max(1, q - 1))}
-            className="flex h-11 w-11 items-center justify-center text-lg hover:text-accent"
-            aria-label="Decrease quantity"
-            disabled={disabled}
-          >
-            −
-          </button>
-          <span className="w-10 text-center font-semibold tabular-nums">
-            {qty}
-          </span>
-          <button
-            type="button"
-            onClick={() => setQty((q) => q + 1)}
-            className="flex h-11 w-11 items-center justify-center text-lg hover:text-accent"
-            aria-label="Increase quantity"
-            disabled={disabled}
-          >
-            +
-          </button>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleAdd}
-          disabled={disabled}
-          className={clsx(
-            "inline-flex h-12 flex-1 items-center justify-center rounded-full text-sm font-semibold transition-colors",
-            disabled
-              ? "cursor-not-allowed bg-muted text-muted-foreground"
-              : added
-              ? "bg-accent text-paper"
-              : "bg-ink text-paper hover:bg-accent"
+        <div className="text-right">
+          <p className="font-display text-[32px] leading-none tracking-[-0.02em]">
+            {fmt(total)}
+          </p>
+          <p className="mt-1 font-mono text-[11px] tracking-[0.04em] text-fg-2">
+            {fmt(unitCents)}&nbsp;/&nbsp;ea
+          </p>
+          {savings > 0 && (
+            <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-accent">
+              SAVE {savings}%
+            </p>
           )}
-        >
-          {disabled
-            ? "Sold out"
-            : added
-            ? "Added to cart ✓"
-            : `Add to cart — ${formatPrice(unitPriceCents * qty)}`}
-        </button>
+        </div>
       </div>
-    </div>
-  );
-}
 
-function VariantOption({
-  label,
-  sub,
-  selected,
-  onClick,
-  badge,
-}: {
-  label: string;
-  sub: string;
-  selected: boolean;
-  onClick: () => void;
-  badge?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={selected}
-      className={clsx(
-        "relative rounded-xl border p-4 text-left transition-colors",
-        selected
-          ? "border-ink ring-2 ring-ink"
-          : "border-muted-border hover:border-ink"
-      )}
-    >
-      <div className="flex items-center justify-between">
-        <span className="font-semibold">{label}</span>
-        {badge && (
-          <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-paper">
-            {badge}
-          </span>
+      <button
+        type="button"
+        onClick={handleAdd}
+        className={`flex h-[46px] w-full items-center justify-center gap-2 rounded-sm text-[13px] font-bold uppercase tracking-[0.08em] transition-colors ${
+          added
+            ? "bg-stock-ok text-ink-0"
+            : "bg-accent text-accent-fg hover:bg-accent-hover"
+        }`}
+      >
+        {added ? (
+          "Added to Cart ✓"
+        ) : (
+          <>
+            Add to Cart
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="square"
+            >
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </>
         )}
-      </div>
-      <div className="mt-1 text-sm text-muted-foreground">{sub}</div>
-    </button>
+      </button>
+
+      <p className="text-center font-mono text-[10px] uppercase tracking-[0.1em] text-fg-3">
+        Free shipping on orders over $250 · Ships next business day
+      </p>
+    </div>
   );
 }

@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getAllProducts, getProductBySlug } from "@/lib/products";
 import { ProductImage } from "@/components/product-image";
-import { formatPrice } from "@/lib/format";
 import { AddToCart } from "@/app/shop/[slug]/_add-to-cart";
 
 export const runtime = "edge";
@@ -12,96 +11,90 @@ export async function generateStaticParams() {
   return products.map((p) => ({ slug: p.slug }));
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}) {
   const product = await getProductBySlug(params.slug);
-  return { title: product?.name ?? "Product" };
+  return { title: product ? `${product.name} — Elevated Customs` : "Product" };
 }
 
-export default async function ProductPage({ params }: { params: { slug: string } }) {
+export default async function ProductPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
   const product = await getProductBySlug(params.slug);
   if (!product) notFound();
 
-  const soldOut = product.inventory_count <= 0;
-
   return (
-    <div className="mx-auto max-w-container px-4 py-8 sm:px-6 md:py-14">
-      <nav className="reveal text-sm text-muted-foreground">
-        <Link href="/shop" className="hover:text-accent">
-          ← Back to shop
+    <div className="mx-auto max-w-container px-4 py-10 sm:px-8 md:py-16">
+      {/* Breadcrumb */}
+      <nav className="mb-8">
+        <Link
+          href="/shop"
+          className="font-mono text-[11px] uppercase tracking-[0.1em] text-fg-2 transition-colors hover:text-accent"
+        >
+          ← Shop
         </Link>
       </nav>
 
-      <div className="mt-6 grid gap-10 md:grid-cols-2 md:gap-14">
-        {/* Gallery (single image for v1, layout supports more later) */}
-        <div className="reveal">
+      <div className="grid gap-12 md:grid-cols-2 md:gap-16">
+        {/* Image */}
+        <div>
           <ProductImage
             src={product.image_url}
             alt={product.name}
             label={product.name}
+            ledCount={product.led_count}
             priority
             sizes="(max-width: 768px) 100vw, 50vw"
           />
-          {/* Thumbnail strip placeholder — keeps layout in shape for multi-photo later */}
-          <div className="mt-3 grid grid-cols-4 gap-3">
+          <div className="mt-3 grid grid-cols-4 gap-2">
             {[0, 1, 2, 3].map((i) => (
               <div
                 key={i}
                 aria-hidden
-                className="aspect-square rounded-md bg-muted"
+                className="aspect-square rounded-sm bg-[repeating-linear-gradient(45deg,#1a1c22_0_6px,#16181d_6px_12px)]"
               />
             ))}
           </div>
         </div>
 
         {/* Details */}
-        <div className="reveal">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-accent">
             {product.led_count} LED · SKU {product.sku}
           </p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+          <h1 className="mt-2 font-display text-[clamp(32px,4vw,56px)] uppercase leading-[0.92] tracking-[-0.03em]">
             {product.name}
           </h1>
 
-          <div className="mt-4 flex items-baseline gap-3">
-            <span className="text-2xl font-bold">
-              {formatPrice(product.price_single_cents)}
-            </span>
-            <span className="text-sm text-muted-foreground">/ single</span>
-          </div>
-          <div className="mt-1 flex items-baseline gap-3">
-            <span className="text-xl font-semibold text-accent">
-              {formatPrice(product.price_kit_cents)}
-            </span>
-            <span className="text-sm text-muted-foreground">/ 12-pack kit</span>
-          </div>
-
-          {soldOut ? (
-            <div className="mt-6 inline-flex items-center rounded-full bg-ink px-4 py-2 text-sm font-semibold text-paper">
-              Sold out — restocking soon
-            </div>
-          ) : (
-            <p className="mt-3 text-sm text-muted-foreground">
-              In stock · Ships in 1–2 business days
-            </p>
-          )}
-
-          <p className="mt-6 max-w-prose text-base text-ink/80">
+          <p className="mt-5 text-[15px] leading-[1.65] text-fg-1">
             {product.description}
           </p>
 
           <div className="mt-8">
-            <AddToCart product={product} disabled={soldOut} />
+            <AddToCart product={product} />
           </div>
 
           {/* Specs */}
-          <dl className="mt-10 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-muted-border pt-6 text-sm">
-            <Spec label="LED count" value={`${product.led_count}`} />
-            <Spec label="Waterproof" value="IP68" />
+          <dl className="mt-10 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-ink-4 pt-8">
+            <Spec label="LED Count" value={`${product.led_count} per pod`} />
+            <Spec label="Waterproof" value="IP68 Rated" />
             <Spec label="Voltage" value="12V DC" />
-            <Spec label="Housing" value="Aluminum" />
-            <Spec label="Kit contents" value="12 lights + controller + harness" />
-            <Spec label="Warranty" value="1 year" />
+            <Spec label="Housing" value="Aluminum Alloy" />
+            <Spec label="Kit Contents" value="12 pods + controller + harness" />
+            <Spec label="Warranty" value="2 Year (pods lifetime)" />
           </dl>
+
+          {/* Trust signals */}
+          <div className="mt-8 grid grid-cols-3 gap-3 border-t border-ink-4 pt-6">
+            <TrustItem icon="IP68" label="Waterproof" />
+            <TrustItem icon="NJ" label="Ships From NJ" />
+            <TrustItem icon="2YR" label="Warranty" />
+          </div>
         </div>
       </div>
     </div>
@@ -111,10 +104,23 @@ export default async function ProductPage({ params }: { params: { slug: string }
 function Spec({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <dt className="font-mono text-[10px] uppercase tracking-[0.1em] text-fg-2">
         {label}
       </dt>
-      <dd className="mt-1 font-medium">{value}</dd>
+      <dd className="mt-1 text-[14px] font-medium text-fg-0">{value}</dd>
+    </div>
+  );
+}
+
+function TrustItem({ icon, label }: { icon: string; label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1 rounded-sm border border-ink-4 bg-ink-2 py-3 text-center">
+      <span className="font-display text-[16px] uppercase tracking-[-0.01em] text-accent">
+        {icon}
+      </span>
+      <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-fg-2">
+        {label}
+      </span>
     </div>
   );
 }

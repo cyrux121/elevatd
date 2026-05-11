@@ -11,17 +11,17 @@ export function ShopFilter({
   active: number | null;
 }) {
   return (
-    <div className="reveal mt-8 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-      <div className="flex items-center gap-2">
-        <span className="mr-2 shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          LED count
+    <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+      <div className="flex items-center gap-2 py-3">
+        <span className="mr-2 shrink-0 font-mono text-[10px] uppercase tracking-[0.1em] text-fg-2">
+          LED Count
         </span>
         <FilterChip href="/shop" label="All" active={active === null} />
         {ledCounts.map((n) => (
           <FilterChip
             key={n}
             href={`/shop?led=${n}`}
-            label={`${n}`}
+            label={`${n} LED`}
             active={active === n}
           />
         ))}
@@ -43,10 +43,10 @@ function FilterChip({
     <Link
       href={href}
       className={clsx(
-        "inline-flex h-9 shrink-0 items-center justify-center rounded-full border px-4 text-sm font-medium transition-colors",
+        "inline-flex h-8 shrink-0 items-center justify-center rounded-sm border px-3 font-mono text-[11px] uppercase tracking-[0.06em] transition-colors",
         active
-          ? "border-ink bg-ink text-paper"
-          : "border-muted-border bg-paper text-ink hover:border-ink"
+          ? "border-accent bg-accent/10 text-accent"
+          : "border-ink-4 bg-ink-2 text-fg-1 hover:border-ink-5 hover:text-fg-0"
       )}
     >
       {label}

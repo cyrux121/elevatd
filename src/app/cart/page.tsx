@@ -2,18 +2,24 @@ import { CartView } from "@/app/cart/_cart-view";
 
 export const runtime = "edge";
 
-export const metadata = { title: "Cart" };
+export const metadata = { title: "Cart — Elevated Customs" };
 
 export default function CartPage() {
   return (
-    <div className="mx-auto max-w-container px-4 py-12 sm:px-6 md:py-16">
-      <p className="reveal text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-        Your cart
-      </p>
-      <h1 className="reveal mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-        Review your build
-      </h1>
-      <CartView />
-    </div>
+    <>
+      <section className="border-b border-ink-4 py-16">
+        <div className="mx-auto max-w-container px-4 sm:px-8">
+          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-accent">
+            // YOUR BUILD
+          </p>
+          <h1 className="mt-3 font-display text-[clamp(36px,5vw,64px)] uppercase leading-[0.92] tracking-[-0.03em]">
+            Review Your Cart
+          </h1>
+        </div>
+      </section>
+      <div className="mx-auto max-w-container px-4 py-12 sm:px-8">
+        <CartView />
+      </div>
+    </>
   );
 }

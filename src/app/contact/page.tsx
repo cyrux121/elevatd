@@ -1,54 +1,111 @@
 export const runtime = "edge";
 
-export const metadata = { title: "Contact & FAQ" };
+export const metadata = { title: "Contact — Elevated Customs" };
 
 export default function ContactPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 md:py-24">
-      <p className="reveal text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-        Support
-      </p>
-      <h1 className="reveal mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
-        Contact & FAQ
-      </h1>
-      <p className="reveal mt-4 text-lg text-ink/80">
-        Got a question? Email{" "}
-        <a
-          href="mailto:support@elevatedcustoms.com"
-          className="text-accent hover:underline"
-        >
-          support@elevatedcustoms.com
-        </a>
-        . We answer fast.
-      </p>
+    <>
+      <section className="border-b border-ink-4 py-20">
+        <div className="mx-auto max-w-container px-4 sm:px-8">
+          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-accent">
+            // SUPPORT
+          </p>
+          <h1 className="mt-3 font-display text-[clamp(48px,7vw,96px)] uppercase leading-[0.92] tracking-[-0.035em]">
+            Hit Us Up.
+          </h1>
+        </div>
+      </section>
 
-      <div className="reveal mt-14 space-y-10">
-        <Faq id="shipping" q="Shipping">
-          Flat $15 shipping on US orders under $250. Free shipping over $250. Orders
-          ship in 1–2 business days from New Jersey.
-        </Faq>
-        <Faq id="returns" q="Returns">
-          30 days, no questions asked. Lights must be in resellable condition. We pay
-          return shipping on defects.
-        </Faq>
-        <Faq id="warranty" q="Warranty">
-          1-year warranty on all rock lights. If a light fails under normal use, we
-          replace it. Email us with photo + order #.
-        </Faq>
-        <Faq id="install" q="Install">
-          12V system. Plug into any switched accessory line. Full wiring harness and
-          controller included with every 12-pack kit.
-        </Faq>
-      </div>
+      <section className="py-20">
+        <div className="mx-auto max-w-container px-4 sm:px-8">
+          <div className="grid gap-16 md:grid-cols-2">
+            {/* Contact info */}
+            <div className="space-y-8">
+              <ContactBlock
+                label="Email"
+                value="support@elevatedcustoms.com"
+                href="mailto:support@elevatedcustoms.com"
+                note="Typically replies within a few hours"
+              />
+              <ContactBlock
+                label="Instagram"
+                value="@elevatedcustoms"
+                href="#"
+                note="DMs open — tag us in your install"
+              />
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-fg-2">
+                  Hours
+                </p>
+                <p className="mt-2 text-[15px] text-fg-1">
+                  Mon – Fri, 9am – 6pm ET
+                </p>
+                <p className="mt-1 text-[14px] text-fg-2">
+                  Orders ship next business day from New Jersey
+                </p>
+              </div>
+            </div>
+
+            {/* Quick info cards */}
+            <div className="space-y-4">
+              <InfoCard
+                title="Shipping"
+                body="Flat $15 on orders under $250. Free shipping over $250. Ships next business day from New Jersey."
+              />
+              <InfoCard
+                title="Returns"
+                body="30 days, no questions asked. Lights must be in resellable condition. We cover return shipping on defects."
+              />
+              <InfoCard
+                title="Warranty"
+                body="2-year warranty on kits. Lifetime warranty on the LED pods themselves. Email with photo + order number."
+              />
+              <InfoCard
+                title="Install"
+                body="12V system. Plug into any switched accessory line. Full wiring harness and controller included with every 12-pack kit."
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function ContactBlock({
+  label,
+  value,
+  href,
+  note,
+}: {
+  label: string;
+  value: string;
+  href: string;
+  note: string;
+}) {
+  return (
+    <div>
+      <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-fg-2">
+        {label}
+      </p>
+      <a
+        href={href}
+        className="mt-2 block font-display text-[20px] uppercase tracking-[-0.01em] text-accent transition-colors hover:text-accent-hover"
+      >
+        {value}
+      </a>
+      <p className="mt-1 text-[13px] text-fg-2">{note}</p>
     </div>
   );
 }
 
-function Faq({ id, q, children }: { id: string; q: string; children: React.ReactNode }) {
+function InfoCard({ title, body }: { title: string; body: string }) {
   return (
-    <section id={id} className="border-t border-muted-border pt-8">
-      <h2 className="text-xl font-bold tracking-tight">{q}</h2>
-      <p className="mt-3 text-ink/80">{children}</p>
-    </section>
+    <div className="rounded-sm border border-ink-4 bg-ink-2 px-6 py-5">
+      <p className="font-display text-[16px] uppercase tracking-[-0.01em]">
+        {title}
+      </p>
+      <p className="mt-2 text-[13px] leading-[1.55] text-fg-1">{body}</p>
+    </div>
   );
 }
