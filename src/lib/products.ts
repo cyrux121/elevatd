@@ -73,7 +73,7 @@ const FALLBACK_PRODUCTS: Product[] = [
     price_single_cents: 6499,
     price_kit_cents: 67900,
     inventory_count: 0,
-    image_url: null,
+    image_url: "/images/219-led-rock-light.jpg",
     active: true,
     description: BASE_DESCRIPTION(),
     created_at: new Date().toISOString(),
