@@ -123,9 +123,6 @@ export function AddToCart({ product }: { product: Product }) {
         )}
       </button>
 
-      <p className="text-center font-mono text-[10px] uppercase tracking-[0.1em] text-fg-3">
-        Free shipping on orders over $250 · Ships next business day
-      </p>
     </div>
   );
 }

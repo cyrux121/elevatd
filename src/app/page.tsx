@@ -219,8 +219,7 @@ export default async function HomePage() {
             <span className="text-accent">KEEP YOUR CASH.</span>
           </h2>
           <p className="mx-auto mt-5 max-w-[52ch] leading-[1.6] text-fg-1">
-            Free shipping on orders over $250. Apple Pay, Google Pay, all major cards.
-            Ships next business day from New Jersey.
+            Apple Pay, Google Pay, all major cards accepted.
           </p>
           <div className="mt-7 flex justify-center">
             <Link
