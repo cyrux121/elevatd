@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/lib/cart-store";
 import {
@@ -14,6 +15,7 @@ export function CartView() {
   const setQuantity = useCart((s) => s.setQuantity);
   const removeLine = useCart((s) => s.removeLine);
   const subtotal = useCart((s) => s.subtotalCents());
+  const [checkingOut, setCheckingOut] = useState(false);
 
   if (!hydrated) {
     return (
@@ -150,11 +152,28 @@ export function CartView() {
         </div>
         <button
           type="button"
-          disabled
-          title="Stripe Checkout coming soon"
-          className="mt-5 flex h-12 w-full cursor-not-allowed items-center justify-center rounded-sm bg-ink-3 text-[12px] font-bold uppercase tracking-[0.08em] text-fg-3"
+          disabled={checkingOut}
+          onClick={async () => {
+            setCheckingOut(true);
+            try {
+              const res = await fetch("/api/checkout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ lines }),
+              });
+              const data = await res.json();
+              if (data.url) window.location.href = data.url;
+            } finally {
+              setCheckingOut(false);
+            }
+          }}
+          className={`mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-sm text-[12px] font-bold uppercase tracking-[0.08em] transition-colors ${
+            checkingOut
+              ? "cursor-wait bg-ink-3 text-fg-3"
+              : "bg-accent text-accent-fg hover:bg-accent-hover"
+          }`}
         >
-          Checkout — Coming Soon
+          {checkingOut ? "Redirecting…" : "Checkout"}
         </button>
         <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.08em] text-fg-3">
           Apple Pay · Google Pay · All major cards
