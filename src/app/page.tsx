@@ -36,9 +36,7 @@ export default async function HomePage() {
               · TRUCK TESTED · IP68 RATED · SHIPS FROM NEW JERSEY ·
             </p>
             <h1 className="mt-4 font-display text-[clamp(48px,8vw,120px)] uppercase leading-[0.92] tracking-[-0.035em]">
-              ELEVATION,
-              <br />
-              NOT&nbsp;<span className="text-accent">INFLATION.</span>
+              ELEVATED<br /><span className="text-accent">CUSTOMS.</span>
             </h1>
             <p className="mt-7 max-w-[52ch] text-[clamp(15px,1.4vw,18px)] leading-[1.55] text-fg-1">
               Premium LED rock lights for trucks that work. Same pods, same controllers,
