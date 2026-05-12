@@ -36,4 +36,12 @@ export function createSupabaseAdminClient() {
   });
 }
 
+// Cookie-free client for public reads (product listing, static params generation).
+// Safe to call at build time — no request context required.
+export function createSupabasePublicClient() {
+  return createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
 export { isSupabaseConfigured };

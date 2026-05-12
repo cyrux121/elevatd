@@ -1,5 +1,5 @@
 import type { Product } from "@/lib/types";
-import { createSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/server";
+import { createSupabasePublicClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 // Static fallback used when Supabase isn't configured yet (so the dev UI still
 // renders). Mirrors the seed data — keep in sync with scripts/seed.ts.
@@ -74,7 +74,7 @@ const EXCLUDED_SLUGS = ["144-led-rock-light"];
 
 export async function getAllProducts(): Promise<Product[]> {
   if (!isSupabaseConfigured) return FALLBACK_PRODUCTS;
-  const supabase = createSupabaseServerClient();
+  const supabase = createSupabasePublicClient();
   const { data, error } = await supabase
     .from("products")
     .select("*")
@@ -93,7 +93,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   if (!isSupabaseConfigured) {
     return FALLBACK_PRODUCTS.find((p) => p.slug === slug) ?? null;
   }
-  const supabase = createSupabaseServerClient();
+  const supabase = createSupabasePublicClient();
   const { data, error } = await supabase
     .from("products")
     .select("*")
