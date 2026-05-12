@@ -34,7 +34,7 @@ function fmt(cents: number) {
 }
 
 export function AddToCart({ product }: { product: Product }) {
-  const [qty, setQty] = useState<Qty>(12);
+  const [qty, setQty] = useState<Qty>(1);
   const [added, setAdded] = useState(false);
   const addLine = useCart((s) => s.addLine);
 

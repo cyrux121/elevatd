@@ -70,6 +70,8 @@ function BASE_DESCRIPTION() {
   return "Premium IP68 waterproof LED rock lights built for trucks, SUVs, and off-road vehicles. Aluminum housing, 12V, easy install. Available as single units or complete 12-piece underbody kits.";
 }
 
+const EXCLUDED_SLUGS = ["144-led-rock-light"];
+
 export async function getAllProducts(): Promise<Product[]> {
   if (!isSupabaseConfigured) return FALLBACK_PRODUCTS;
   const supabase = createSupabaseServerClient();
@@ -82,7 +84,9 @@ export async function getAllProducts(): Promise<Product[]> {
     console.error("[getAllProducts]", error);
     return FALLBACK_PRODUCTS;
   }
-  return (data as Product[]) ?? FALLBACK_PRODUCTS;
+  return ((data as Product[]) ?? FALLBACK_PRODUCTS).filter(
+    (p) => !EXCLUDED_SLUGS.includes(p.slug)
+  );
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
