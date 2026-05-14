@@ -3,43 +3,23 @@ import Link from "next/link";
 export function SiteFooter() {
   return (
     <footer className="border-t border-ink-4 bg-ink-1">
-      <div className="mx-auto max-w-container px-4 pb-6 pt-16 sm:px-8">
+      <div className="mx-auto max-w-container px-4 pb-6 pt-14 sm:px-8">
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 md:grid-cols-4 md:gap-12 pb-14">
+        {/* Main grid */}
+        <div className="grid grid-cols-1 gap-10 pb-12 sm:grid-cols-2 md:grid-cols-4 md:gap-12">
 
           {/* Brand */}
           <div className="md:col-span-1">
-            <p className="font-display text-[28px] leading-none tracking-tight uppercase">
+            <Link
+              href="/"
+              className="font-display text-[26px] leading-none tracking-tight uppercase transition-colors hover:text-accent"
+            >
               ELEVATED<br />CUSTOMS
+            </Link>
+            <p className="mt-3 max-w-[28ch] text-[13px] leading-relaxed text-fg-2">
+              Premium LED rock lights at honest prices. No brand tax. Ships from Lyndhurst, NJ.
             </p>
-            <p className="mt-3 max-w-[28ch] text-sm text-fg-2 leading-relaxed">
-              Elevation, not inflation. Premium LED rock lights at honest prices, built for trucks that earn their dirt.
-            </p>
-          </div>
-
-          {/* Shop */}
-          <FooterCol title="Shop">
-            <FooterLink href="/shop">All Products</FooterLink>
-            <FooterLink href="/shop">12-Pack Kits</FooterLink>
-            <FooterLink href="/shop">Singles</FooterLink>
-            <FooterLink href="/shop">New Arrivals</FooterLink>
-          </FooterCol>
-
-          {/* Brand */}
-          <FooterCol title="Brand">
-            <FooterLink href="/about">About</FooterLink>
-            <FooterLink href="/contact">Contact</FooterLink>
-            <FooterLink href="/contact#warranty">Warranty</FooterLink>
-            <FooterLink href="/contact#shipping">Returns &amp; Shipping</FooterLink>
-          </FooterCol>
-
-          {/* Follow */}
-          <div>
-            <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.12em] text-fg-2">
-              Follow
-            </p>
-            <div className="flex gap-2">
+            <div className="mt-4 flex gap-2">
               <SocialLink href="#" label="Instagram">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <rect x="3" y="3" width="18" height="18" rx="4" />
@@ -53,16 +33,46 @@ export function SiteFooter() {
                 </svg>
               </SocialLink>
             </div>
-            <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.08em] text-fg-3 leading-relaxed">
-              SHIPS FROM<br />NEW JERSEY
+          </div>
+
+          {/* Column 1: Navigate */}
+          <FooterCol title="Navigate">
+            <FooterLink href="/shop">Shop</FooterLink>
+            <FooterLink href="/about">About</FooterLink>
+            <FooterLink href="/contact">Contact</FooterLink>
+            <FooterLink href="/faq">FAQ</FooterLink>
+          </FooterCol>
+
+          {/* Column 2: Legal */}
+          <FooterCol title="Legal">
+            <FooterLink href="/legal/terms">Terms of Service</FooterLink>
+            <FooterLink href="/legal/privacy">Privacy Policy</FooterLink>
+            <FooterLink href="/legal/refunds">Refund Policy</FooterLink>
+            <FooterLink href="/legal/shipping">Shipping Policy</FooterLink>
+          </FooterCol>
+
+          {/* Column 3: Company */}
+          <div>
+            <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.12em] text-fg-2">
+              Company
             </p>
+            <div className="space-y-2 text-[13px] leading-relaxed text-fg-2">
+              <p>© Elevated Customs 2026</p>
+              <p>Lyndhurst, NJ</p>
+              <a
+                href="mailto:orders@[YOUR DOMAIN]"
+                className="block transition-colors hover:text-accent"
+              >
+                orders@[YOUR DOMAIN]
+              </a>
+            </div>
           </div>
         </div>
 
         {/* Bottom bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink-4 pt-6 font-mono text-[11px] uppercase tracking-[0.06em] text-fg-3">
-          <span>© 2026 ELEVATED CUSTOMS</span>
-          <span>IP68 · DOT-FRIENDLY · LIFETIME LED WARRANTY</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink-4 pt-5 font-mono text-[10px] uppercase tracking-[0.06em] text-fg-3">
+          <span>© 2026 Elevated Customs — Lyndhurst, NJ</span>
+          <span>IP68 · Off-Road Use Only</span>
         </div>
       </div>
     </footer>
@@ -83,7 +93,7 @@ function FooterCol({ title, children }: { title: string; children: React.ReactNo
 function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <li>
-      <Link href={href} className="text-sm text-fg-1 transition-colors hover:text-accent">
+      <Link href={href} className="text-[13px] text-fg-1 transition-colors hover:text-accent">
         {children}
       </Link>
     </li>

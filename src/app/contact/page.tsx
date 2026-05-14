@@ -1,10 +1,16 @@
-export const runtime = "edge";
+import Link from "next/link";
 
+export const runtime = "edge";
 export const metadata = { title: "Contact — Elevated Customs" };
 
 export default function ContactPage() {
+  const subject = encodeURIComponent("Question about my order");
+  const body = encodeURIComponent("Order number (if applicable):\n\nMessage:\n");
+  const mailtoHref = `mailto:orders@[YOUR DOMAIN]?subject=${subject}&body=${body}`;
+
   return (
     <>
+      {/* Hero */}
       <section className="border-b border-ink-4 py-20">
         <div className="mx-auto max-w-container px-4 sm:px-8">
           <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-accent">
@@ -16,54 +22,60 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <section className="py-20">
+      <section className="py-16">
         <div className="mx-auto max-w-container px-4 sm:px-8">
-          <div className="grid gap-16 md:grid-cols-2">
-            {/* Contact info */}
+          <div className="grid gap-12 md:grid-cols-2 md:gap-16">
+
+            {/* Left: contact info */}
             <div className="space-y-8">
-              <ContactBlock
-                label="Email"
-                value="support@elevatedcustoms.com"
-                href="mailto:support@elevatedcustoms.com"
-                note="Typically replies within a few hours"
-              />
-              <ContactBlock
-                label="Instagram"
-                value="@elevatedcustoms"
-                href="#"
-                note="DMs open — tag us in your install"
-              />
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-fg-2">
-                  Hours
+                <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-fg-3">Email</p>
+                <a
+                  href="mailto:orders@[YOUR DOMAIN]"
+                  className="mt-2 block font-display text-[20px] uppercase tracking-[-0.01em] text-accent transition-colors hover:text-accent-hover"
+                >
+                  orders@[YOUR DOMAIN]
+                </a>
+                <p className="mt-1 text-[13px] text-fg-2">
+                  Response within 24 hours, Mon–Fri
                 </p>
-                <p className="mt-2 text-[15px] text-fg-1">
-                  Mon – Fri, 9am – 6pm ET
-                </p>
-                <p className="mt-1 text-[14px] text-fg-2">
-                  Orders ship next business day from New Jersey
+              </div>
+
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-fg-3">Location</p>
+                <p className="mt-2 text-[16px] text-fg-1">Lyndhurst, NJ</p>
+                <p className="mt-1 text-[13px] text-fg-2">Orders ship from here</p>
+              </div>
+
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-fg-3">Hours</p>
+                <p className="mt-2 text-[16px] text-fg-1">Monday – Friday</p>
+                <p className="mt-1 text-[13px] text-fg-2">Closed weekends and federal holidays</p>
+              </div>
+
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-fg-3">Truck Shows</p>
+                <p className="mt-2 text-[15px] text-fg-1">DSLNY — September 2026</p>
+                <p className="mt-1 text-[13px] text-fg-1">Orange County Fair Speedway</p>
+                <p className="mt-1 text-[13px] text-fg-2">Come see the lights in person</p>
+              </div>
+
+              <div className="rounded-sm border border-ink-4 bg-ink-1 px-5 py-4">
+                <p className="text-[13px] leading-[1.6] text-fg-2">
+                  Have a common question?{" "}
+                  <Link href="/faq" className="text-accent hover:underline">
+                    Check the FAQ →
+                  </Link>
                 </p>
               </div>
             </div>
 
-            {/* Quick info cards */}
-            <div className="space-y-4">
-              <InfoCard
-                title="Shipping"
-                body="Flat $15 on orders under $250. Free shipping over $250. Ships next business day from New Jersey."
-              />
-              <InfoCard
-                title="Returns"
-                body="30 days, no questions asked. Lights must be in resellable condition. We cover return shipping on defects."
-              />
-              <InfoCard
-                title="Warranty"
-                body="2-year warranty on kits. Lifetime warranty on the LED pods themselves. Email with photo + order number."
-              />
-              <InfoCard
-                title="Install"
-                body="12V system. Plug into any switched accessory line. Full wiring harness and controller included with every 12-pack kit."
-              />
+            {/* Right: contact form (mailto) */}
+            <div>
+              <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.08em] text-fg-3">
+                Send a message
+              </p>
+              <ContactForm mailtoBase="orders@[YOUR DOMAIN]" />
             </div>
           </div>
         </div>
@@ -72,40 +84,73 @@ export default function ContactPage() {
   );
 }
 
-function ContactBlock({
-  label,
-  value,
-  href,
-  note,
-}: {
-  label: string;
-  value: string;
-  href: string;
-  note: string;
-}) {
+function ContactForm({ mailtoBase }: { mailtoBase: string }) {
   return (
-    <div>
-      <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-fg-2">
-        {label}
-      </p>
-      <a
-        href={href}
-        className="mt-2 block font-display text-[20px] uppercase tracking-[-0.01em] text-accent transition-colors hover:text-accent-hover"
+    <form
+      onSubmit={undefined}
+      action={`mailto:${mailtoBase}`}
+      method="GET"
+      encType="text/plain"
+      className="space-y-4"
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="name" className="label-admin">Name</label>
+          <input
+            id="name"
+            name="name"
+            type="text"
+            required
+            placeholder="Your name"
+            className="admin-input"
+          />
+        </div>
+        <div>
+          <label htmlFor="email" className="label-admin">Email</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            placeholder="you@example.com"
+            className="admin-input"
+          />
+        </div>
+      </div>
+      <div>
+        <label htmlFor="subject" className="label-admin">Subject</label>
+        <input
+          id="subject"
+          name="subject"
+          type="text"
+          required
+          placeholder="Order question, product question, etc."
+          className="admin-input"
+        />
+      </div>
+      <div>
+        <label htmlFor="body" className="label-admin">Message</label>
+        <textarea
+          id="body"
+          name="body"
+          rows={6}
+          required
+          placeholder="Include your order number if relevant…"
+          className="admin-input resize-none"
+        />
+      </div>
+      <button
+        type="submit"
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-sm bg-accent text-[13px] font-bold uppercase tracking-[0.08em] text-accent-fg transition-colors hover:bg-accent-hover"
       >
-        {value}
-      </a>
-      <p className="mt-1 text-[13px] text-fg-2">{note}</p>
-    </div>
-  );
-}
-
-function InfoCard({ title, body }: { title: string; body: string }) {
-  return (
-    <div className="rounded-sm border border-ink-4 bg-ink-2 px-6 py-5">
-      <p className="font-display text-[16px] uppercase tracking-[-0.01em]">
-        {title}
+        Open Email Client
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+          <path d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
+      </button>
+      <p className="text-center font-mono text-[10px] text-fg-3">
+        This opens your email app with the message pre-filled.
       </p>
-      <p className="mt-2 text-[13px] leading-[1.55] text-fg-1">{body}</p>
-    </div>
+    </form>
   );
 }
