@@ -96,32 +96,53 @@ export async function POST(req: NextRequest) {
     if (saveError) throw new Error(`Supabase upsert failed: ${saveError.message} (code: ${saveError.code})`);
     const savedOrder = savedData as DbOrder;
 
-    currentStep = "decrement-inventory";
+    currentStep = "update-product-inventory";
 
     for (const item of lineItems) {
       if (item.sku === "UNKNOWN") continue;
       const unitsToDeduct = item.variant === "kit" ? item.quantity * 12 : item.quantity;
 
-      const { data: product } = await supabase
+      // SELECT current count — throw so error appears in Stripe response
+      const { data: product, error: selectError } = await supabase
         .from("products")
         .select("inventory_count")
         .eq("sku", item.sku)
         .single();
 
-      if (product) {
-        const newCount = Math.max(0, (product.inventory_count as number) - unitsToDeduct);
-        await supabase
-          .from("products")
-          .update({ inventory_count: newCount, updated_at: new Date().toISOString() })
-          .eq("sku", item.sku);
+      if (selectError) {
+        throw new Error(`Products SELECT failed for SKU ${item.sku}: ${selectError.message} (code: ${selectError.code})`);
+      }
+      if (!product) {
+        throw new Error(`Product not found for SKU: ${item.sku}`);
       }
 
-      await supabase.from("inventory_log").insert({
+      const newCount = Math.max(0, (product.inventory_count as number) - unitsToDeduct);
+
+      const { data: updated, error: updateError } = await supabase
+        .from("products")
+        .update({ inventory_count: newCount, updated_at: new Date().toISOString() })
+        .eq("sku", item.sku)
+        .select("sku, inventory_count")
+        .single();
+
+      if (updateError) {
+        throw new Error(`Products UPDATE failed for SKU ${item.sku}: ${updateError.message} (code: ${updateError.code})`);
+      }
+
+      const { error: logError } = await supabase.from("inventory_log").insert({
         sku: item.sku,
         change_amount: -unitsToDeduct,
         reason: "order_fulfilled",
         order_id: savedOrder.id,
       });
+
+      if (logError) {
+        throw new Error(`inventory_log insert failed for SKU ${item.sku}: ${logError.message}`);
+      }
+
+      // Include updated count in the response for verification
+      (item as DbOrderLineItem & { new_inventory?: number }).new_inventory =
+        (updated as { inventory_count: number }).inventory_count;
     }
 
     currentStep = "send-customer-email";
@@ -137,6 +158,11 @@ export async function POST(req: NextRequest) {
       step: currentStep,
       order_number: savedOrder.order_number,
       order_id: savedOrder.id,
+      inventory_updated: lineItems.map((i) => ({
+        sku: i.sku,
+        deducted: i.variant === "kit" ? i.quantity * 12 : i.quantity,
+        new_count: (i as DbOrderLineItem & { new_inventory?: number }).new_inventory,
+      })),
     });
   } catch (error: unknown) {
     const err = error as Error & { code?: string };
