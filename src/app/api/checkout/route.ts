@@ -13,6 +13,7 @@ type CartLineInput = {
   unitPriceCents: number;
   quantity: number;
   variant: "single" | "kit";
+  sku: string;
 };
 
 export async function POST(req: NextRequest) {
@@ -51,6 +52,7 @@ export async function POST(req: NextRequest) {
             l.variant === "kit"
               ? `${l.name} — 12-Pack Kit`
               : l.name,
+          metadata: { sku: l.sku, variant: l.variant },
         },
         unit_amount: l.unitPriceCents,
       },

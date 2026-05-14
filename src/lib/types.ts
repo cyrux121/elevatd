@@ -26,30 +26,43 @@ export type CartLine = {
   quantity: number;
 };
 
-export type OrderStatus = "pending" | "paid" | "fulfilled" | "cancelled" | "refunded";
+export type DbOrderStatus = "new" | "shipped" | "delivered";
 
-export type Order = {
+export type ShippingAddress = {
+  line1: string | null;
+  line2: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string | null;
+};
+
+export type DbOrderLineItem = {
+  name: string;
+  sku: string;
+  variant: Variant;
+  quantity: number;
+  unit_price_cents: number;
+  total_cents: number;
+};
+
+export type DbOrder = {
   id: string;
-  stripe_session_id: string | null;
-  stripe_payment_intent: string | null;
-  customer_email: string;
+  order_number: number;
+  stripe_session_id: string;
+  customer_email: string | null;
   customer_name: string | null;
-  shipping_address: Record<string, unknown> | null;
+  shipping_address: ShippingAddress | null;
+  line_items: DbOrderLineItem[];
   subtotal_cents: number;
   shipping_cents: number;
   total_cents: number;
-  status: OrderStatus;
+  payment_status: string;
+  order_status: DbOrderStatus;
+  tracking_number: string | null;
+  carrier: string | null;
+  internal_notes: string | null;
   created_at: string;
-};
-
-export type OrderItem = {
-  id: string;
-  order_id: string;
-  product_id: string;
-  sku: string;
-  name: string;
-  variant: Variant;
-  unit_price_cents: number;
-  quantity: number;
-  units_sold: number; // 1 for single, 12 for kit — what we deduct from inventory
+  shipped_at: string | null;
+  delivered_at: string | null;
 };
