@@ -7,128 +7,101 @@ import type { DbOrder, DbOrderLineItem, ShippingAddress } from "@/lib/types";
 export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2025-02-24.acacia",
-    // @ts-ignore
-    httpClient: Stripe.createFetchHttpClient(),
-  });
+  let currentStep = "start";
 
-  const body = await req.text();
-  const sig = req.headers.get("stripe-signature");
-
-  if (!sig) {
-    return NextResponse.json({ error: "Missing stripe-signature" }, { status: 400 });
-  }
-
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!webhookSecret) {
-    console.error("[stripe-webhook] STRIPE_WEBHOOK_SECRET not set");
-    return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
-  }
-
-  let event: Stripe.Event;
   try {
-    event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
-  } catch (err) {
-    console.error("[stripe-webhook] Signature verification failed:", err);
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
-  }
+    currentStep = "verify-signature";
 
-  if (event.type === "checkout.session.completed") {
-    // Always return 200 to Stripe — errors are logged for manual recovery
-    await handleCheckoutCompleted(stripe, event.data.object as Stripe.Checkout.Session);
-  }
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2025-02-24.acacia",
+      // @ts-ignore
+      httpClient: Stripe.createFetchHttpClient(),
+    });
 
-  return NextResponse.json({ received: true });
-}
+    const body = await req.text();
+    const sig = req.headers.get("stripe-signature");
 
-async function handleCheckoutCompleted(
-  stripe: Stripe,
-  session: Stripe.Checkout.Session
-): Promise<void> {
-  console.log("[stripe-webhook] checkout.session.completed", session.id);
+    if (!sig) {
+      return NextResponse.json({ error: "Missing stripe-signature" }, { status: 400 });
+    }
 
-  // Retrieve full session with line items and product metadata
-  let fullSession: Stripe.Checkout.Session;
-  try {
-    fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
+    }
+
+    const event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
+
+    if (event.type !== "checkout.session.completed") {
+      return NextResponse.json({ received: true, skipped: event.type });
+    }
+
+    const session = event.data.object as Stripe.Checkout.Session;
+
+    currentStep = "fetch-line-items";
+
+    const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
       expand: ["line_items.data.price.product"],
     });
-  } catch (err) {
-    console.error("[stripe-webhook] Failed to retrieve session:", err);
-    return;
-  }
 
-  // Build line items from the expanded Stripe data
-  const lineItems: DbOrderLineItem[] = (fullSession.line_items?.data ?? []).map((item) => {
-    const product = item.price?.product as Stripe.Product | null;
-    const sku = product?.metadata?.sku ?? "UNKNOWN";
-    const variant = (product?.metadata?.variant ?? "single") as "single" | "kit";
-    return {
-      name: item.description ?? product?.name ?? "Unknown item",
-      sku,
-      variant,
-      quantity: item.quantity ?? 1,
-      unit_price_cents: item.price?.unit_amount ?? 0,
-      total_cents: item.amount_total ?? 0,
+    const lineItems: DbOrderLineItem[] = (fullSession.line_items?.data ?? []).map((item) => {
+      const product = item.price?.product as Stripe.Product | null;
+      const sku = product?.metadata?.sku ?? "UNKNOWN";
+      const variant = (product?.metadata?.variant ?? "single") as "single" | "kit";
+      return {
+        name: item.description ?? product?.name ?? "Unknown item",
+        sku,
+        variant,
+        quantity: item.quantity ?? 1,
+        unit_price_cents: item.price?.unit_amount ?? 0,
+        total_cents: item.amount_total ?? 0,
+      };
+    });
+
+    const stripeAddr = fullSession.shipping_details?.address;
+    const shippingAddress: ShippingAddress | null = stripeAddr
+      ? {
+          line1: stripeAddr.line1 ?? null,
+          line2: stripeAddr.line2 ?? null,
+          city: stripeAddr.city ?? null,
+          state: stripeAddr.state ?? null,
+          postal_code: stripeAddr.postal_code ?? null,
+          country: stripeAddr.country ?? null,
+        }
+      : null;
+
+    const orderPayload = {
+      stripe_session_id: fullSession.id,
+      customer_email: fullSession.customer_details?.email ?? null,
+      customer_name: fullSession.customer_details?.name ?? null,
+      shipping_address: shippingAddress,
+      line_items: lineItems,
+      subtotal_cents: fullSession.amount_subtotal ?? 0,
+      shipping_cents: fullSession.total_details?.amount_shipping ?? 0,
+      total_cents: fullSession.amount_total ?? 0,
+      payment_status: "paid",
+      order_status: "new",
     };
-  });
 
-  // Build shipping address from Stripe data
-  const stripeAddr = fullSession.shipping_details?.address;
-  const shippingAddress: ShippingAddress | null = stripeAddr
-    ? {
-        line1: stripeAddr.line1 ?? null,
-        line2: stripeAddr.line2 ?? null,
-        city: stripeAddr.city ?? null,
-        state: stripeAddr.state ?? null,
-        postal_code: stripeAddr.postal_code ?? null,
-        country: stripeAddr.country ?? null,
-      }
-    : null;
+    currentStep = "save-order-to-supabase";
 
-  const orderPayload = {
-    stripe_session_id: fullSession.id,
-    customer_email: fullSession.customer_details?.email ?? null,
-    customer_name: fullSession.customer_details?.name ?? null,
-    shipping_address: shippingAddress,
-    line_items: lineItems,
-    subtotal_cents: fullSession.amount_subtotal ?? 0,
-    shipping_cents: fullSession.total_details?.amount_shipping ?? 0,
-    total_cents: fullSession.amount_total ?? 0,
-    payment_status: "paid",
-    order_status: "new",
-  };
+    const supabase = createSupabaseAdminClient();
 
-  const supabase = createSupabaseAdminClient();
-
-  // Save order — idempotent via ON CONFLICT
-  let savedOrder: DbOrder | null = null;
-  try {
-    const { data, error } = await supabase
+    const { data: savedData, error: saveError } = await supabase
       .from("orders")
       .upsert(orderPayload, { onConflict: "stripe_session_id", ignoreDuplicates: false })
       .select()
       .single();
 
-    if (error) throw error;
-    savedOrder = data as DbOrder;
-    console.log("[stripe-webhook] Order saved:", savedOrder.order_number);
-  } catch (err) {
-    console.error("[stripe-webhook] FAILED to save order — manual recovery needed:", {
-      stripe_session_id: session.id,
-      error: err,
-    });
-    return;
-  }
+    if (saveError) throw new Error(`Supabase upsert failed: ${saveError.message} (code: ${saveError.code})`);
+    const savedOrder = savedData as DbOrder;
 
-  // Decrement inventory for each line item
-  for (const item of lineItems) {
-    if (item.sku === "UNKNOWN") continue;
-    // Kit variant sells 12 physical units per kit quantity
-    const unitsToDeduct = item.variant === "kit" ? item.quantity * 12 : item.quantity;
+    currentStep = "decrement-inventory";
 
-    try {
+    for (const item of lineItems) {
+      if (item.sku === "UNKNOWN") continue;
+      const unitsToDeduct = item.variant === "kit" ? item.quantity * 12 : item.quantity;
+
       const { data: product } = await supabase
         .from("products")
         .select("inventory_count")
@@ -142,34 +115,48 @@ async function handleCheckoutCompleted(
           .update({ inventory_count: newCount, updated_at: new Date().toISOString() })
           .eq("sku", item.sku);
       }
-    } catch (err) {
-      console.error(`[stripe-webhook] Inventory decrement failed for SKU ${item.sku}:`, err);
-    }
 
-    try {
       await supabase.from("inventory_log").insert({
         sku: item.sku,
         change_amount: -unitsToDeduct,
         reason: "order_fulfilled",
         order_id: savedOrder.id,
       });
-    } catch (err) {
-      console.error("[stripe-webhook] inventory_log insert failed:", err);
     }
-  }
 
-  // Send emails — log errors but don't fail
-  try {
+    currentStep = "send-customer-email";
     await sendOrderConfirmation(savedOrder);
-    console.log("[stripe-webhook] Confirmation email sent to", savedOrder.customer_email);
-  } catch (err) {
-    console.error("[stripe-webhook] Customer confirmation email failed:", err);
-  }
 
-  try {
+    currentStep = "send-admin-email";
     await sendAdminOrderAlert(savedOrder);
-    console.log("[stripe-webhook] Admin alert sent");
-  } catch (err) {
-    console.error("[stripe-webhook] Admin alert email failed:", err);
+
+    currentStep = "complete";
+
+    return NextResponse.json({
+      received: true,
+      step: currentStep,
+      order_number: savedOrder.order_number,
+      order_id: savedOrder.id,
+    });
+  } catch (error: unknown) {
+    const err = error as Error & { code?: string };
+    return NextResponse.json(
+      {
+        received: true,
+        step: currentStep,
+        error: err?.message ?? "unknown error",
+        errorName: err?.name,
+        errorStack: err?.stack?.split("\n").slice(0, 4),
+        env: {
+          hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+          hasServiceRole: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+          hasResend: !!process.env.RESEND_API_KEY,
+          hasWebhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET,
+          hasStripeSecret: !!process.env.STRIPE_SECRET_KEY,
+          hasAdminEmail: !!process.env.ADMIN_EMAIL,
+        },
+      },
+      { status: 200 }
+    );
   }
 }
